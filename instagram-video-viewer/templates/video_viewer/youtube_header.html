@@ -1,0 +1,1 @@
+{% if youtube_connected %}<form class="yt-disconnect" method="post" action="{% url 'youtube_disconnect' %}">{% csrf_token %}<input type="hidden" name="return_to" value="{{ request.get_full_path }}"><button type="submit">YouTube connected · Disconnect</button></form>{% endif %}
