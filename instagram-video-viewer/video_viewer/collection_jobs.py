@@ -39,11 +39,14 @@ def enqueue_refresh(query):
     return collection, job
 
 
-def claim_job():
+def claim_job(job_id=None):
     close_old_connections()
     try:
         with transaction.atomic():
-            pending = CollectionRefreshJob.objects.filter(status="queued").order_by("created_at").values_list("pk", flat=True).first()
+            queued = CollectionRefreshJob.objects.filter(status="queued")
+            if job_id is not None:
+                queued = queued.filter(pk=job_id)
+            pending = queued.order_by("created_at").values_list("pk", flat=True).first()
             if not pending:
                 return None
             # The conditional update also makes claiming safe on SQLite, where

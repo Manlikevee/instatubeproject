@@ -22,7 +22,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Open http://127.0.0.1:8000. In a second terminal, start the refresh worker:
+Open http://127.0.0.1:8000. Locally, start the refresh worker in a second terminal:
 
 ```bash
 source .venv/bin/activate
@@ -107,4 +107,4 @@ Searches and video metadata are stored in the configured database. Thumbnail ima
 - `POST /api/v1/collections/{uuid}/refresh/` — queue a refresh (HTTP 202).
 - `GET /api/v1/jobs/{uuid}/` — poll `queued`, `running`, `succeeded`, or `failed` status.
 
-The API and web app use the same database queue. A worker must be running to process jobs. For serverless hosting such as Vercel, run the worker on a persistent worker host or connect a durable external queue; an in-process background thread is not guaranteed to survive a serverless request.
+The API and web app use the same database queue. Locally, run `python manage.py run_collection_worker`. On Vercel, the job status endpoint claims and processes a queued job inside a serverless function when the browser polls it, so no terminal worker is needed. Vercel functions have a maximum execution time; unusually slow Instagram requests can time out, after which the UI reports a retryable failure. Set `DATABASE_URL` in Vercel to the same persistent PostgreSQL database used by the web app; do not rely on SQLite across serverless instances.
