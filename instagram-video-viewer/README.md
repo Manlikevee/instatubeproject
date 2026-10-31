@@ -55,13 +55,14 @@ DATABASE_URL=                         # omit or leave blank to use SQLite
 # Optional session belonging to an account authorized to see the requested profile:
 INSTAGRAM_SESSION_USERNAME=
 INSTALOADER_SESSIONFILE=
+INSTALOADER_SESSION_B64=
 GALLERY_DL_INSTAGRAM_COOKIES=
 YOUTUBE_CLIENT_ID=
 YOUTUBE_CLIENT_SECRET=
 YOUTUBE_REDIRECT_URI=http://127.0.0.1:8000/youtube/callback/
 ```
 
-Without an optional session, requests are anonymous and can only return content Instagram makes accessible. If you configure a session file, create it yourself using Instaloader with your own account and keep it private. The app does not collect passwords or log in automatically. Use `DJANGO_DEBUG=false` and a proper secret key/host list outside local development.
+Without an optional session, requests are anonymous and can only return content Instagram makes accessible. If Instagram requires login, configure an Instaloader session from an account you control that is authorized to view the profile. Generate a session using `instaloader --login YOUR_INSTAGRAM_USERNAME` (Instaloader prompts locally and saves a reusable session file); never put your Instagram password in app settings. For local use, set `INSTAGRAM_SESSION_USERNAME` and `INSTALOADER_SESSIONFILE`. For Vercel, set `INSTAGRAM_SESSION_USERNAME` and `INSTALOADER_SESSION_B64` to the base64 contents of that session file in Vercel's Production environment variables, then redeploy. Do not commit or share the session file or encoded value; it grants access to your Instagram session. The app decodes it into a temporary file for Instaloader and removes that file after loading. A session only grants what that account is already authorized to access; it does not bypass privacy restrictions. Use `DJANGO_DEBUG=false` and a proper secret key/host list outside local development.
 
 The `/gallery-dl/` page uses gallery-dl 1.32.18, accepts a profile name or Instagram profile/Reel URL, and inspects up to 24 recent posts. If Instagram requires a session, `GALLERY_DL_INSTAGRAM_COOKIES` may point to a cookie file from an account authorized to access the profile. Keep that file private. The package remains subject to Instagram changes and access controls.
 
