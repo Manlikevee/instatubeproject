@@ -34,9 +34,34 @@ def _aware_utc(value):
 
 
 def _load_authorized_session(loader):
-    """Load an owner-provided Instaloader session file or its base64 env form."""
+    """Load an authorized Instagram session.
+
+    Preferred (no terminal needed): set INSTAGRAM_SESSION_USERNAME and
+    INSTAGRAM_SESSIONID (copied from your browser's cookies for instagram.com).
+    Optionally also INSTAGRAM_CSRFTOKEN and INSTAGRAM_DS_USER_ID.
+
+    Fallback: an Instaloader session file via INSTALOADER_SESSIONFILE or the
+    base64 INSTALOADER_SESSION_B64 value.
+    """
     session_user = os.getenv("INSTAGRAM_SESSION_USERNAME", "").strip()
     if not session_user:
+        return
+
+    cookie_session_id = os.getenv("INSTAGRAM_SESSIONID", "").strip()
+    if cookie_session_id:
+        cookies = {"sessionid": cookie_session_id}
+        csrf = os.getenv("INSTAGRAM_CSRFTOKEN", "").strip()
+        ds_user_id = os.getenv("INSTAGRAM_DS_USER_ID", "").strip()
+        if csrf:
+            cookies["csrftoken"] = csrf
+        if ds_user_id:
+            cookies["ds_user_id"] = ds_user_id
+        try:
+            loader.load_session(session_user, cookies)
+        except Exception as exc:
+            # Never log cookie values. Continue anonymously so the normal
+            # Instagram access error is shown to the user.
+            logger.warning("Could not load Instagram session cookie (%s); continuing anonymously.", type(exc).__name__)
         return
 
     session_path = os.getenv("INSTALOADER_SESSIONFILE", "").strip()
@@ -54,8 +79,6 @@ def _load_authorized_session(loader):
         if session_path and os.path.isfile(session_path):
             loader.load_session_from_file(session_user, session_path)
     except Exception as exc:
-        # Never log the cookie/session contents. Continue anonymously so the
-        # normal Instagram access error is shown to the user.
         logger.warning("Could not load configured Instaloader session (%s); continuing anonymously.", type(exc).__name__)
     finally:
         if temporary_path:
@@ -103,7 +126,7 @@ def fetch_video_posts(username, limit=24, scan_limit=60):
     except (ProfileNotExistsException, QueryReturnedNotFoundException) as exc:
         raise ProfileLookupError("We couldn't find that Instagram profile.", "not_found") from exc
     except LoginRequiredException as exc:
-        raise ProfileLookupError("Instagram requires login to access this profile. Try a public profile or configure an authorized session.", "login_required") from exc
+        raise ProfileLookupError("Instagram requires login to access this profile. Try a public profile, or add INSTAGRAM_SESSION_USERNAME and INSTAGRAM_SESSIONID to your environment variables.", "login_required") from exc
     except TooManyRequestsException as exc:
         raise ProfileLookupError("Instagram is rate limiting requests. Please wait a while before trying again.", "rate_limited") from exc
     except ConnectionException as exc:
