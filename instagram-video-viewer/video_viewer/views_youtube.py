@@ -96,7 +96,11 @@ def _fetch_oauth_token(flow, request, redirect_uri):
 
     if not local_http and callback_parts.scheme != "https":
         raise YouTubeSetupError(
-            "YouTube OAuth requires HTTPS outside local development."
+            "YouTube OAuth requires HTTPS outside local development. "
+            f"Current: DEBUG={settings.DEBUG}, callback={callback_url}, "
+            f"redirect_uri={redirect_uri}. For local use, set DJANGO_DEBUG=true "
+            "and YOUTUBE_REDIRECT_URI=http://127.0.0.1:8000/youtube/callback/ "
+            "and open the app at http://127.0.0.1:8000."
         )
 
     previous_value = os.environ.get(
